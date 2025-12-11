@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dynamic Quote Generator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
     }
     #quoteDisplay {
       margin: 20px 0;
@@ -15,14 +17,22 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       background: #f9f9f9;
-      min-height: 40px;
+      min-height: 60px;
     }
     .form-section {
-      margin-top: 25px;
+      margin-top: 20px;
     }
-    input {
-      margin: 5px;
+    input, select, button {
+      margin: 6px 6px 6px 0;
       padding: 8px;
+      font-size: 14px;
+    }
+    .controls {
+      margin-top: 12px;
+    }
+    .small {
+      font-size: 13px;
+      color: #555;
     }
   </style>
 </head>
@@ -31,17 +41,39 @@
   <h1>Dynamic Quote Generator</h1>
 
   <!-- Category Selector -->
-  <label>Select Category: </label>
+  <label for="categorySelect">Category:</label>
   <select id="categorySelect"></select>
 
   <!-- Displayed Quote -->
-  <div id="quoteDisplay"></div>
+  <div id="quoteDisplay" aria-live="polite"></div>
 
   <!-- Show Random Quote -->
-  <button id="newQuote">Show New Quote</button>
+  <div class="controls">
+    <button id="newQuote">Show New Quote</button>
+    <button id="showLast">Show Last Viewed (session)</button>
+  </div>
 
   <!-- Add Quote Form (Created Dynamically by JS) -->
   <div id="formContainer"></div>
+
+  <!-- Import / Export Controls -->
+  <div class="form-section" id="importExportSection">
+    <h3>Import / Export Quotes</h3>
+
+    <!-- Export -->
+    <button id="exportBtn">Export Quotes (JSON)</button>
+
+    <!-- Import -->
+    <label for="importMode" class="small">Import mode:</label>
+    <select id="importMode" class="small" title="Choose how imported quotes are applied">
+      <option value="merge">Merge with existing</option>
+      <option value="replace">Replace existing</option>
+    </select>
+
+    <input type="file" id="importFile" accept=".json,application/json" />
+
+    <p class="small">Imported JSON must be an array of objects: <code>{ "text": "quote", "category": "cat" }</code>.</p>
+  </div>
 
   <script src="script.js"></script>
 </body>
