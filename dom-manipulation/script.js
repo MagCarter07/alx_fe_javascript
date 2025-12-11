@@ -1,11 +1,12 @@
-/* Dynamic Quote Generator — Local Storage + JSON Import/Export + Server Sync
+/* Dynamic Quote Generator — Local Storage + JSON Import/Export + Server Sync + POST
    Key features:
    - Save / load quotes to localStorage
    - Store last viewed quote in sessionStorage
    - Export / import quotes in JSON
    - Dynamic category filtering
    - Sync with mock server + conflict resolution
-   - Notifications for sync and conflicts
+   - POST new quotes to server
+   - Notifications for sync, conflicts, and POST
 */
 
 // Local storage keys
@@ -13,10 +14,10 @@ const STORAGE_KEY = "dqg_quotes_v1";
 const SESSION_LAST_KEY = "dqg_lastQuote_v1";
 const FILTER_KEY = "dqg_lastFilter_v1";
 
-// Mock server URL (JSONPlaceholder simulation)
+// Mock server URL
 const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
 
-// Default quotes (used if localStorage empty)
+// Default quotes
 const defaultQuotes = [
   { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Motivation" },
   { text: "Do one thing every day that scares you.", category: "Life" },
@@ -189,7 +190,7 @@ function createAddQuoteForm() {
 }
 
 // ---------- Add Quote ----------
-function addQuote() {
+async function addQuote() {
   const textEl = document.getElementById("newQuoteText");
   const catEl = document.getElementById("newQuoteCategory");
   const text = textEl.value.trim();
@@ -209,6 +210,23 @@ function addQuote() {
   catEl.value = "";
 
   alert("Quote added successfully!");
+
+  // ---------- POST new quote to server ----------
+  try {
+    const res = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newQ)
+    });
+    if (res.ok) {
+      notify("Quote posted to server successfully!");
+    } else {
+      notify("Failed to post quote to server.", "error");
+    }
+  } catch (err) {
+    console.error("POST request failed:", err);
+    notify("Error posting quote to server.", "error");
+  }
 }
 
 // ---------- JSON Export ----------
@@ -287,25 +305,22 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// ---------- syncQuotes (required by checker) ----------
+// ---------- syncQuotes ----------
 async function syncQuotes() {
   notify("Syncing with server...");
   const serverQuotes = await fetchQuotesFromServer();
   if (!serverQuotes.length) return;
 
-  // Build sets for conflict detection
   const localSet = new Map(quotes.map(q => [q.text + "||" + q.category, q]));
   const serverSet = new Map(serverQuotes.map(q => [q.text + "||" + q.category, q]));
 
   const conflicts = [];
   const newFromServer = [];
 
-  // Detect new quotes from server
   serverSet.forEach((value, key) => {
     if (!localSet.has(key)) newFromServer.push(value);
   });
 
-  // Detect conflicts
   quotes.forEach(localQ => {
     serverQuotes.forEach(serverQ => {
       if (localQ.text === serverQ.text && localQ.category !== serverQ.category) {
@@ -314,13 +329,11 @@ async function syncQuotes() {
     });
   });
 
-  // Resolve conflicts (server wins)
   conflicts.forEach(conf => {
     const index = quotes.findIndex(q => q.text === conf.local.text);
     if (index !== -1) quotes[index] = conf.server;
   });
 
-  // Merge new server quotes
   newFromServer.forEach(sq => quotes.push(sq));
 
   saveQuotesToLocalStorage();
