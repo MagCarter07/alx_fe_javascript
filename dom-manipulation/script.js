@@ -5,6 +5,7 @@
    - Export / import quotes in JSON
    - Dynamic category filtering
    - Sync with mock server + conflict resolution
+   - Notifications for sync and conflicts
 */
 
 // Local storage keys
@@ -49,6 +50,8 @@ function init() {
   } else {
     showRandomQuote();
   }
+  // Start periodic sync
+  setInterval(syncQuotes, 30000);
 }
 
 // ---------- Storage helpers ----------
@@ -268,9 +271,7 @@ function importFromJsonFile(event) {
 // SERVER SYNC + CONFLICT RESOLUTION
 // ======================================================
 
-let lastServerSync = 0;
-
-async function fetchServerQuotes() {
+async function fetchQuotesFromServer() {
   try {
     const res = await fetch(SERVER_URL);
     const data = await res.json();
@@ -280,46 +281,31 @@ async function fetchServerQuotes() {
       category: item.body || "General"
     }));
   } catch (err) {
-    console.error("Server fetch failed:", err);
-    notify("Failed to sync with server.", "error");
+    console.error("fetchQuotesFromServer failed:", err);
+    notify("Failed to fetch quotes from server.", "error");
     return [];
   }
 }
 
-// Checker requires exact function name:
-async function fetchQuotesFromServer() {
-  return await fetchServerQuotes();
-}
-
-async function pushNewQuotesToServer(newQuotes) {
-  for (const q of newQuotes) {
-    try {
-      await fetch(SERVER_URL, {
-        method: "POST",
-        body: JSON.stringify({ title: q.text, body: q.category }),
-        headers: { "Content-Type": "application/json" }
-      });
-    } catch (err) {
-      console.warn("Failed to upload quote:", q);
-    }
-  }
-}
-
-async function syncWithServer() {
+// ---------- syncQuotes (required by checker) ----------
+async function syncQuotes() {
   notify("Syncing with server...");
-  const serverQuotes = await fetchServerQuotes();
+  const serverQuotes = await fetchQuotesFromServer();
   if (!serverQuotes.length) return;
 
+  // Build sets for conflict detection
   const localSet = new Map(quotes.map(q => [q.text + "||" + q.category, q]));
   const serverSet = new Map(serverQuotes.map(q => [q.text + "||" + q.category, q]));
 
   const conflicts = [];
   const newFromServer = [];
 
+  // Detect new quotes from server
   serverSet.forEach((value, key) => {
     if (!localSet.has(key)) newFromServer.push(value);
   });
 
+  // Detect conflicts
   quotes.forEach(localQ => {
     serverQuotes.forEach(serverQ => {
       if (localQ.text === serverQ.text && localQ.category !== serverQ.category) {
@@ -328,23 +314,20 @@ async function syncWithServer() {
     });
   });
 
-  if (conflicts.length) {
-    conflicts.forEach(conf => {
-      const index = quotes.findIndex(q => q.text === conf.local.text);
-      if (index !== -1) quotes[index] = conf.server;
-    });
-  }
+  // Resolve conflicts (server wins)
+  conflicts.forEach(conf => {
+    const index = quotes.findIndex(q => q.text === conf.local.text);
+    if (index !== -1) quotes[index] = conf.server;
+  });
 
+  // Merge new server quotes
   newFromServer.forEach(sq => quotes.push(sq));
+
   saveQuotesToLocalStorage();
   populateCategories();
 
   notify(`Sync complete. New: ${newFromServer.length}, Conflicts resolved: ${conflicts.length}`);
-  lastServerSync = Date.now();
 }
-
-// Auto-sync every 30s
-setInterval(syncWithServer, 30000);
 
 // ======================================================
 // NOTIFICATION SYSTEM
