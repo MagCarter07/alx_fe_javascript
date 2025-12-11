@@ -339,7 +339,7 @@ async function syncQuotes() {
   saveQuotesToLocalStorage();
   populateCategories();
 
-  notify(`Sync complete. New: ${newFromServer.length}, Conflicts resolved: ${conflicts.length}`);
+ notify(`Quotes synced with server! New: ${newFromServer.length}, Conflicts resolved: ${conflicts.length}`);
 }
 
 // ======================================================
