@@ -326,3 +326,148 @@ function importFromJsonFile(event) {
 
   reader.readAsText(file);
 }
+
+// ======================================================
+// SERVER SYNC + CONFLICT RESOLUTION SYSTEM
+// ======================================================
+
+// Mock server URL (JSONPlaceholder simulation)
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
+
+// Local versioning
+let lastServerSync = 0;
+
+// --- Fetch quotes from server ---
+async function fetchServerQuotes() {
+  try {
+    const res = await fetch(SERVER_URL);
+    const data = await res.json();
+
+    // Convert server format -> our format
+    const serverQuotes = data.slice(0, 10).map(item => ({
+      id: item.id,
+      text: item.title,
+      category: item.body || "General"
+    }));
+
+    return serverQuotes;
+  } catch (err) {
+    console.error("Server fetch failed:", err);
+    notify("Failed to sync with server.", "error");
+    return [];
+  }
+}
+
+// --- Push new local quotes to server ---
+async function pushNewQuotesToServer(newQuotes) {
+  for (const q of newQuotes) {
+    try {
+      await fetch(SERVER_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          title: q.text,
+          body: q.category
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (err) {
+      console.warn("Failed to upload quote:", q);
+    }
+  }
+}
+
+
+// ======================================================
+// MAIN SYNC LOGIC
+// ======================================================
+async function syncWithServer() {
+  notify("Syncing with server...");
+
+  const serverQuotes = await fetchServerQuotes();
+  if (!serverQuotes.length) return;
+
+  const localSet = new Map(
+    quotes.map(q => [q.text + "||" + q.category, q])
+  );
+
+  const serverSet = new Map(
+    serverQuotes.map(q => [q.text + "||" + q.category, q])
+  );
+
+  const conflicts = [];
+  const newFromServer = [];
+
+  serverSet.forEach((value, key) => {
+    if (!localSet.has(key)) {
+      newFromServer.push(value);
+    }
+  });
+
+  // Conflict: local quote changed but matches server on text but category changed
+  quotes.forEach(localQ => {
+    serverQuotes.forEach(serverQ => {
+      if (localQ.text === serverQ.text && localQ.category !== serverQ.category) {
+        conflicts.push({ local: localQ, server: serverQ });
+      }
+    });
+  });
+
+  // Apply server-precedence auto-resolution
+  if (conflicts.length) {
+    conflicts.forEach(conf => {
+      const index = quotes.findIndex(q => q.text === conf.local.text);
+      if (index !== -1) {
+        quotes[index] = conf.server; // server wins
+      }
+    });
+  }
+
+  // Insert new server additions
+  newFromServer.forEach(sq => quotes.push(sq));
+
+  saveQuotesToLocalStorage();
+  populateCategories();
+  populateCategoriesFilter();
+
+  notify(`Sync complete. New: ${newFromServer.length}, Conflicts resolved: ${conflicts.length}`);
+
+  lastServerSync = Date.now();
+}
+
+
+// ======================================================
+// PERIODIC SYNC (runs every 30 seconds)
+// ======================================================
+setInterval(syncWithServer, 30000);
+
+
+// ======================================================
+// NOTIFICATION SYSTEM
+// ======================================================
+function notify(message, type = "info") {
+  let box = document.getElementById("notifyBox");
+
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "notifyBox";
+    box.style.position = "fixed";
+    box.style.bottom = "20px";
+    box.style.right = "20px";
+    box.style.padding = "12px 16px";
+    box.style.borderRadius = "8px";
+    box.style.background = "#333";
+    box.style.color = "white";
+    box.style.fontSize = "14px";
+    box.style.zIndex = "9999";
+    box.style.opacity = "0";
+    box.style.transition = "opacity .3s";
+    document.body.appendChild(box);
+  }
+
+  box.textContent = message;
+  box.style.background = type === "error" ? "#c0392b" : "#27ae60";
+  box.style.opacity = "1";
+
+  setTimeout(() => box.style.opacity = "0", 3000);
+}
+

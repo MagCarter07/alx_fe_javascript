@@ -1,95 +1,161 @@
-Dynamic Quote Generator — Advanced DOM Manipulation
+Dynamic Quote Generator — Advanced Version
 
-This project is part of the ALX Front-End JavaScript module, focusing on mastering DOM manipulation, interactive UI generation, and dynamic content handling using pure JavaScript.
-
-The task requires building a web application that generates quotes dynamically based on user actions, while also allowing users to add new quotes and categories directly from the interface.
+An interactive, web-based quote management system featuring dynamic filtering, persistent storage, and simulated server synchronization with conflict resolution.
 
 📌 Project Overview
 
-The Dynamic Quote Generator is a simple but powerful web application that:
+This project transforms a basic quote generator into a full-featured, dynamic application.
+It allows users to add quotes, filter them by category, and sync data with a simulated server, ensuring consistency across sessions.
 
-Displays a random quote from a selected category
-
-Allows users to add new quotes dynamically
-
-Updates the DOM in real time
-
-Demonstrates advanced DOM manipulation techniques
-
-Uses no frameworks — just HTML, CSS, and JavaScript
-
-📁 Project Structure
-alx_fe_javascript/
-└── dom-manipulation/
-├── index.html
-├── script.js
-└── README.md
+The app demonstrates core frontend concepts including DOM manipulation, LocalStorage persistence, JSON structuring, asynchronous operations, and conflict resolution.
 
 ✨ Features
 
-1. Random Quote Display
+1. Dynamic Quote Display (Task 1 – Mandatory)
 
-Users can pick a category.
+Displays stored quotes dynamically on load.
 
-Clicking Show New Quote displays a random quote from that category.
+Allows adding new quotes from a form.
 
-If a category has no quotes yet, the UI responds appropriately.
+Instantly updates the DOM when quotes are added.
 
-2. Dynamic Category Handling
+Persists all data using LocalStorage.
 
-Categories are generated automatically based on the available quote data.
+2. Dynamic Content Filtering System (Task 2 – Mandatory)
 
-When a new quote is added, the category list updates instantly.
+A dynamic filter dropdown populated from the quotes' categories.
 
-3. Add Quotes Dynamically
+Users can filter quotes by category in real time.
 
-Users can create new content through a dynamic form:
+The last selected category is stored and restored from LocalStorage.
 
-Enter quote text
+New categories update automatically.
 
-Enter category
+3. Category Persistence & Enhanced Storage (Task 3 – Mandatory)
 
-Submit
-When submitted:
+Every quote added updates both the visual list and stored data.
 
-The quote is added to the main dataset
+Category list remains accurate and up to date.
 
-The category dropdown updates instantly
+LocalStorage tracks:
 
-No page reload required
+Quotes
 
-4. Fully JavaScript-Driven UI
+Categories
 
-No HTML form is hard-coded.
-The form is generated dynamically using JavaScript via document.createElement.
+Selected filter
+
+4. Server Sync & Conflict Resolution (Task 4 – Mandatory)
+
+Simulated using JSONPlaceholder (or any mock REST API).
+
+Includes:
+
+Automatic periodic sync between the browser and server.
+
+Conflict resolution (server-wins strategy).
+
+UI notifications when sync or conflict resolution occurs.
+
+Optional user-driven conflict handling.
+
+📂 Project Structure
+/Dynamic-Quote-Generator
+│── index.html
+│── styles.css
+│── script.js
+│── README.md
 
 🛠️ Technologies Used
 
-HTML5 — structure and markup
+HTML5
 
-CSS3 — minimal styling
+CSS3
 
-JavaScript (ES6+) — dynamic DOM creation, event handling, array manipulation
+JavaScript (ES6+)
 
-📌 How It Works
-Main Functions
-Function Purpose
-showRandomQuote() Displays a random quote from the selected category
-createAddQuoteForm() Dynamically generates the Add Quote form
-addQuote() Pushes user input into the quotes dataset and updates UI
-populateCategories() Refreshes the category dropdown when new categories appear
-🚀 Getting Started
+Web Storage API
 
-1. Clone the repository
-   git clone https://github.com/<your-username>/alx_fe_javascript
+Fetch API
 
-2. Navigate to the project directory
-   cd alx_fe_javascript/dom-manipulation
+JSONPlaceholder / Mock API
 
-3. Open the project in a browser
+🚀 How It Works
 
-Simply open:
+1. Loading
 
-index.html
+Quotes are loaded from LocalStorage or seeded initially.
 
-Your Dynamic Quote Generator will run immediately.
+2. Adding Quotes
+
+Users can submit:
+
+Quote text
+
+Author
+
+Category
+
+and the UI updates instantly.
+
+3. Filtering
+
+Categories populate automatically.
+
+Filtering is instant and dynamic.
+
+Filter preference is saved.
+
+4. Syncing with Server
+
+Every few seconds:
+
+Local and server data are compared.
+
+Conflicts resolved based on server precedence.
+
+LocalStorage updates.
+
+User notified of changes.
+
+⚡ Core Functions
+
+populateCategories()
+
+filterQuotes()
+
+addQuote()
+
+syncWithServer()
+
+resolveConflicts()
+
+loadQuotesFromStorage()
+
+📦 Installation & Setup
+git clone https://github.com/your-username/Dynamic-Quote-Generator.git
+
+Open index.html in your browser and you're good to go.
+
+🧪 Testing
+
+Make sure to test:
+
+Adding quotes
+
+Category updates
+
+Filtering behavior
+
+Storage persistence
+
+Server sync and conflict management
+
+Notifications
+
+👩🏽‍💻 Author
+Built by Magnus Afiawo
+
+Frontend Developer • Sound Engineer • Geographer • Tech Learner (ALX)
+
+Dedicated to building clean, functional and user-focused web applications.
